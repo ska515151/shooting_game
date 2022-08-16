@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sungyun GAME</title>
+</head>
+<body>
+    <h1>sungyun GAME</h1>
+    <script>
+
+        // canvas settings
+        let canvas; // 도화지 개념
+        let ctx; // 직접 그림그려줌
+        canvas = document.createElement("canvas");
+        ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth / 2 - 100;
+        canvas.height = window.innerHeight - 300;
+        document.body.appendChild(canvas);
+
+        let backgroundImage, spaceShipImage,  bulletImage, enemyImage, gameOverImage;
+
+
+        function loadImage() {
+            backgroundImage = new Image();
+            backgroundImage.src = "http://drive.google.com/uc?export=view&id=1LE3WxIJKAXO1IppkrZ4RSE4ptmgJvjxN";
+            spaceShipImage = new Image();
+            spaceShipImage.src = "http://drive.google.com/uc?export=view&id=1yurAJBvj8NwAqcNQEpmmFPFcoUE-6DGM";
+            bulletImage = new Image();
+            bulletImage.src = "http://drive.google.com/uc?export=view&id=1x9nFjbdpJSy8ylF9ZZ_neYqiLi8l8a4P";
+            enemyImage = new Image();
+            enemyImage.src = "https://drive.google.com/file/d/17x9qxmCznsSlsiHoMJc15hsh_grcaB7Q/view?usp=sharing";
+            gameOverImage = new Image();
+            gameOverImage.src = "https://drive.google.com/file/d/15wyG2gelSq-I2jGjm1u2uz9OkMJKcEd7/view?usp=sharing";
+        }
+
+        loadImage();
+
+        // spaceShip x, y
+        let spaceShipX = canvas.width/2-spaceShipImage.width/2 - 50;
+        let spaceShipY = canvas.height-spaceShipImage.height - 60;
+
+        let bulletList = [] // 총알들을 저장하는 리스트
+
+        function Bullet() {
+            this.x = 0;
+            this.y = 0;
+            this.init = function() {
+                this.x = spaceShipX + 10;
+                this.y = spaceShipY - 30;
+
+                bulletList.push(this);
+            };
+
+            this.update = function() {
+                this.y -= 7;
+            }
+        } 
+
+        let keysDown = {};
+        function setupKeyboardListner() {
+            document.addEventListener("keydown", function(event) {
+                keysDown[event.keyCode] = true;
+            });
+            document.addEventListener("keyup", function(event) {
+                delete keysDown[event.keyCode];
+
+                if (event.keyCode == 32) { // spacebar
+                    createBullet(); // 총알 생성
+                }
+            })
+        }
+
+        function createBullet() {
+            let b = new Bullet();
+            b.init();
+        }
+
+        function update() {
+            if (39 in keysDown) { // right
+                spaceShipX += 5; // 속도
+            }
+            if (37 in keysDown) { // left
+                spaceShipX -= 5; // 속도
+            }
+
+            if (spaceShipX <= 0) {
+                spaceShipX = 0;
+            }
+            if (spaceShipX >= canvas.width - spaceShipImage.width) {
+                spaceShipX = canvas.width - spaceShipImage.width;
+            }
+
+            // 총알의 y좌표 업데이트 하는 함수 호출
+            for (let i = 0; i < bulletList.length; i++)
+            {
+                bulletList[i].update();
+            }
+        }
+
+        setupKeyboardListner();
+
+        function render() {
+            ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(spaceShipImage, spaceShipX, spaceShipY);
+
+            for (let i = 0; i < bulletList.length; i++) {
+                ctx.drawImage(bulletImage, bulletList[i].x, bulletList[i].y);
+            }
+        }
+
+        // start!!
+        function main() {
+            update();
+            render();
+            requestAnimationFrame(main);
+        }
+
+        main();
+
+        // 총알만들기
+        // 1. 스페이스바를 누르면 총알 발사
+        // 2. 총알이 발사 = 총알의 y값이 --, 총알의 x값은? 스페이스를 누른 순간의 우주선의 x좌표
+        // 3. 발사된 총알들은 총알 배열에 저장한다.
+        // 4. 모든 총알들은 x,y 좌표값이 있어야한다.
+        // 5. 총알 배열을 가지고 render 그려준다.
+
+
+    </script>
+</body>
+</html>
