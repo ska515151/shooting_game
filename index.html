@@ -15,24 +15,31 @@
         let ctx; // 직접 그림그려줌
         canvas = document.createElement("canvas");
         ctx = canvas.getContext("2d");
-        canvas.width = window.innerWidth / 2 - 100;
+        canvas.width = 350;
         canvas.height = window.innerHeight - 300;
         document.body.appendChild(canvas);
 
         let backgroundImage, spaceShipImage,  bulletImage, enemyImage, gameOverImage;
+        let gameOver = false;
+        let score = 0;
+        let level = 1;
+        
+        let enemySpeed = 0.5;
+        let enemyInterval = 2500;
 
 
         function loadImage() {
             backgroundImage = new Image();
             backgroundImage.src = "http://drive.google.com/uc?export=view&id=1LE3WxIJKAXO1IppkrZ4RSE4ptmgJvjxN";
             spaceShipImage = new Image();
-            spaceShipImage.src = "http://drive.google.com/uc?export=view&id=1yurAJBvj8NwAqcNQEpmmFPFcoUE-6DGM";
+            // spaceShipImage.src = "http://drive.google.com/uc?export=view&id=1yurAJBvj8NwAqcNQEpmmFPFcoUE-6DGM"; // 기본
+            spaceShipImage.src = "http://drive.google.com/uc?export=view&id=1A-t3CjQ_SNu7VdS604FCsL7QpohH702U"; // 기본 + 도훈
             bulletImage = new Image();
             bulletImage.src = "http://drive.google.com/uc?export=view&id=1x9nFjbdpJSy8ylF9ZZ_neYqiLi8l8a4P";
             enemyImage = new Image();
-            enemyImage.src = "https://drive.google.com/file/d/17x9qxmCznsSlsiHoMJc15hsh_grcaB7Q/view?usp=sharing";
+            enemyImage.src = "http://drive.google.com/uc?export=view&id=17x9qxmCznsSlsiHoMJc15hsh_grcaB7Q";
             gameOverImage = new Image();
-            gameOverImage.src = "https://drive.google.com/file/d/15wyG2gelSq-I2jGjm1u2uz9OkMJKcEd7/view?usp=sharing";
+            gameOverImage.src = "http://drive.google.com/uc?export=view&id=1qGD1gmu3Z_g6g67lHvrr6mLGR51-SlpV";
         }
 
         loadImage();
@@ -49,14 +56,50 @@
             this.init = function() {
                 this.x = spaceShipX + 10;
                 this.y = spaceShipY - 30;
-
+                this.alive = true;
                 bulletList.push(this);
             };
 
             this.update = function() {
                 this.y -= 7;
-            }
-        } 
+            };
+
+            this.checkHit = function() {
+                for (let i = 0; i < enemyList.length; i++)
+                {
+                    if (this.y <= enemyList[i].y &&
+                        this.x >= enemyList[i].x &&
+                        this.x <= enemyList[i].x + 50)  {
+                        score++;
+                        this.alive = false; // 죽은 총알
+                        enemyList.splice(i, 1);
+                    }
+                }
+            };
+        }
+
+        function generateRandomValue(min, max) {
+            let randomNum = Math.floor(Math.random() * (max-min+1)) + min;
+            return randomNum;
+        }
+
+        let enemyList = [];
+        function Enemy() {
+            this.x = 0;
+            this.y = 0;
+            this.init = function() {
+                this.y = 0;
+                this.x = generateRandomValue(0, canvas.width - 50);
+                enemyList.push(this);
+            };
+            this.update = function() {
+                this.y += enemySpeed;
+
+                if (this.y >= canvas.height - enemyImage.height) {
+                    gameOver = true;
+                }
+            };
+        }
 
         let keysDown = {};
         function setupKeyboardListner() {
@@ -77,6 +120,18 @@
             b.init();
         }
 
+        function crateEnemy() {
+            const inetval = setInterval(function() {
+                if (score > 1 && score % 10 == 0) {
+                    enemySpeed += 0.5;
+                    enemyInterval += 500;
+                    level++;
+                }
+                let e = new Enemy();
+                e.init();
+            }, enemyInterval);
+        }
+
         function update() {
             if (39 in keysDown) { // right
                 spaceShipX += 5; // 속도
@@ -95,7 +150,15 @@
             // 총알의 y좌표 업데이트 하는 함수 호출
             for (let i = 0; i < bulletList.length; i++)
             {
-                bulletList[i].update();
+                if (bulletList[i].alive) {
+                    bulletList[i].update();
+                    bulletList[i].checkHit();
+                }
+            }
+
+            for (let i = 0; i < enemyList.length; i++)
+            {
+                enemyList[i].update();
             }
         }
 
@@ -104,19 +167,32 @@
         function render() {
             ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
             ctx.drawImage(spaceShipImage, spaceShipX, spaceShipY);
-
+            ctx.fillText(`Level:${level}   Score:${score}`, 20, 30);
+            ctx.fillStyle = "white";
+            ctx.font = "20px arial";
             for (let i = 0; i < bulletList.length; i++) {
-                ctx.drawImage(bulletImage, bulletList[i].x, bulletList[i].y);
+                if (bulletList[i].alive) {
+                    ctx.drawImage(bulletImage, bulletList[i].x, bulletList[i].y);
+                }
+            }
+
+            for (let i = 0; i < enemyList.length; i++) {
+                ctx.drawImage(enemyImage, enemyList[i].x, enemyList[i].y);
             }
         }
 
         // start!!
         function main() {
-            update();
-            render();
-            requestAnimationFrame(main);
+            if (!gameOver) {
+                update();
+                render();
+                requestAnimationFrame(main);
+            } else {
+                ctx.drawImage(gameOverImage, canvas.width / 2 - gameOverImage.width / 2, canvas.height / 2 - gameOverImage.height / 2);
+            }
         }
 
+        crateEnemy();
         main();
 
         // 총알만들기
